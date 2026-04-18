@@ -4,9 +4,9 @@ import numpy as np
 from pathlib import Path
 
 # Tile size used for both single-image resize and tiled detection
-TILE_SIZE    = 480
-TILE_OVERLAP = 0.30   # 20 % — prevents missing detections near tile edges
-TILE_THRESH  = 960    # pixels — images larger than this in any dimension use tiling
+TILE_SIZE    = 640    # YOLO native resolution — no internal upscaling, max detail
+TILE_OVERLAP = 0.30
+TILE_THRESH  = 640    # updated to match new tile size
 
 
 class YOLOPipeline:
@@ -27,16 +27,52 @@ class YOLOPipeline:
     # Single-image detection (small AOI — resize to TILE_SIZE × TILE_SIZE)
     # ──────────────────────────────────────────────────────────────────────────
 
+    @staticmethod
+    def _enhance(pil_img):
+        """
+        Simulate Chrome WebGL post-processing that was present in the original
+        Selenium screenshot approach: light unsharp mask + contrast + saturation.
+        Makes raw satellite tiles look closer to what the model was trained on.
+        """
+        from PIL import ImageFilter, ImageEnhance
+        img = pil_img.filter(ImageFilter.UnsharpMask(radius=1.2, percent=40, threshold=3))
+        img = ImageEnhance.Contrast(img).enhance(1.15)
+        img = ImageEnhance.Color(img).enhance(1.10)
+        return img
+
+    @staticmethod
+    def _letterbox(pil_img, target=TILE_SIZE):
+        """
+        Resize image to target×target using letterboxing (pad with gray 114,114,114).
+        Preserves aspect ratio — palm crowns stay circular, not distorted ovals.
+        This matches YOLO's own internal preprocessing so the model sees images
+        in exactly the same format it was trained on.
+        """
+        from PIL import Image as PILImage
+        w, h   = pil_img.size
+        scale  = target / max(w, h)
+        new_w  = int(round(w * scale))
+        new_h  = int(round(h * scale))
+        resized = pil_img.resize((new_w, new_h), PILImage.LANCZOS)
+        padded  = PILImage.new("RGB", (target, target), (114, 114, 114))
+        pad_x   = (target - new_w) // 2
+        pad_y   = (target - new_h) // 2
+        padded.paste(resized, (pad_x, pad_y))
+        return padded, scale, pad_x, pad_y
+
     def detect(self, image_path, conf_threshold=0.2):
         from PIL import Image as PILImage
-        img = PILImage.open(image_path).resize((TILE_SIZE, TILE_SIZE), PILImage.LANCZOS)
+        img_orig = self._enhance(PILImage.open(image_path).convert("RGB"))
+        img, scale, pad_x, pad_y = self._letterbox(img_orig, TILE_SIZE)
         results = self.model(img, conf=conf_threshold)[0]
         return results
 
     def annotate_image(self, image_path, results):
-        """Draw colored bounding boxes on a TILE_SIZE×TILE_SIZE image — no labels, no scores."""
-        img = cv2.imread(str(image_path))
-        img = cv2.resize(img, (TILE_SIZE, TILE_SIZE))
+        """Draw colored bounding boxes on a letterboxed TILE_SIZE×TILE_SIZE image."""
+        from PIL import Image as PILImage
+        img_orig = self._enhance(PILImage.open(image_path).convert("RGB"))
+        lb, _, _, _ = self._letterbox(img_orig, TILE_SIZE)
+        img = cv2.cvtColor(np.array(lb), cv2.COLOR_RGB2BGR)
         for box in results.boxes:
             x1, y1, x2, y2 = map(int, box.xyxy[0])
             cls   = int(box.cls[0])
@@ -88,7 +124,7 @@ class YOLOPipeline:
         Returns a list of [x1, y1, x2, y2, cls, conf] in full-image pixels.
         """
         from PIL import Image as PILImage
-        img_pil = PILImage.open(image_path).convert("RGB")
+        img_pil = self._enhance(PILImage.open(image_path).convert("RGB"))
         W, H    = img_pil.size
 
         stride   = int(TILE_SIZE * (1.0 - TILE_OVERLAP))
@@ -107,9 +143,12 @@ class YOLOPipeline:
 
                 tile = img_pil.crop((x0, y0, x1c, y1c))
 
-                # Pad edge tiles so the model always sees TILE_SIZE × TILE_SIZE
+                # Pad edge tiles so the model always sees TILE_SIZE × TILE_SIZE.
+                # Use YOLO's standard gray (114,114,114) — the same color used
+                # during training — not black, which creates artificial hard
+                # edges the model never saw and triggers false detections.
                 if tile.size != (TILE_SIZE, TILE_SIZE):
-                    padded = PILImage.new("RGB", (TILE_SIZE, TILE_SIZE), (0, 0, 0))
+                    padded = PILImage.new("RGB", (TILE_SIZE, TILE_SIZE), (114, 114, 114))
                     padded.paste(tile, (0, 0))
                     tile = padded
 

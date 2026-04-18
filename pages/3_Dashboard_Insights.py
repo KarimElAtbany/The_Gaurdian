@@ -171,7 +171,7 @@ if has_ndvi or has_detection:
     with map_col:
         if has_ndvi and 'health_plot' in st.session_state:
             st.caption(t("veg_map_caption", lang))
-            st.pyplot(st.session_state.health_plot)
+            st.pyplot(st.session_state.health_plot, use_container_width=True)
         else:
             st.markdown(f"""
             <div style="background:rgba(33,158,188,0.04);border:1px dashed rgba(33,158,188,0.2);
@@ -188,7 +188,7 @@ if has_ndvi or has_detection:
             img_rgb  = cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB)
             total    = sum(counts.values())
             st.caption(f"{'Palm Census' if lang == 'en' else 'إحصاء النخيل'} — {total:,} {'trees identified' if lang == 'en' else 'نخلة تم تحديدها'}")
-            st.image(img_rgb, use_container_width=True)
+            st.image(img_rgb, width="stretch")
         else:
             st.markdown(f"""
             <div style="background:rgba(33,158,188,0.04);border:1px dashed rgba(33,158,188,0.2);
@@ -360,28 +360,31 @@ if has_ndvi and has_detection:
     st.markdown(f'<div class="g-section-title"><i class="ti ti-trees"></i> {t("tree_health_title", lang)}</div>',
                 unsafe_allow_html=True)
 
-    t1c, t2c, t3c = st.columns(3)
-    with t1c:
-        h = counts.get(1, 0)
-        st.markdown(f"""<div class="g-card" style="text-align:center;">
-            <div style="font-size:36px;font-weight:800;color:#4dcc6e;">{h}</div>
-            <div class="g-card-label">{t("healthy_trees_lbl", lang)}</div>
-            <div class="g-card-desc">{h/total*100:.0f}{t("of_detected_palms", lang)}</div>
-        </div>""", unsafe_allow_html=True)
-    with t2c:
-        y = counts.get(2, 0)
-        st.markdown(f"""<div class="g-card" style="text-align:center;">
-            <div style="font-size:36px;font-weight:800;color:#ffb74d;">{y}</div>
-            <div class="g-card-label">{t("early_stress_lbl_d", lang)}</div>
-            <div class="g-card-desc">{y/total*100:.0f}{t("monitor_closely", lang)}</div>
-        </div>""", unsafe_allow_html=True)
-    with t3c:
-        u = counts.get(0, 0)
-        st.markdown(f"""<div class="g-card" style="text-align:center;">
-            <div style="font-size:36px;font-weight:800;color:#ef5350;">{u}</div>
-            <div class="g-card-label">{t("critical_lbl_d", lang)}</div>
-            <div class="g-card-desc">{u/total*100:.0f}{t("urgent_intervention", lang)}</div>
-        </div>""", unsafe_allow_html=True)
+    if total == 0:
+        st.info("No trees detected yet — run AI Analysis first to see health statistics.")
+    else:
+        t1c, t2c, t3c = st.columns(3)
+        with t1c:
+            h = counts.get(1, 0)
+            st.markdown(f"""<div class="g-card" style="text-align:center;">
+                <div style="font-size:36px;font-weight:800;color:#4dcc6e;">{h}</div>
+                <div class="g-card-label">{t("healthy_trees_lbl", lang)}</div>
+                <div class="g-card-desc">{h/total*100:.0f}{t("of_detected_palms", lang)}</div>
+            </div>""", unsafe_allow_html=True)
+        with t2c:
+            y = counts.get(2, 0)
+            st.markdown(f"""<div class="g-card" style="text-align:center;">
+                <div style="font-size:36px;font-weight:800;color:#ffb74d;">{y}</div>
+                <div class="g-card-label">{t("early_stress_lbl_d", lang)}</div>
+                <div class="g-card-desc">{y/total*100:.0f}{t("monitor_closely", lang)}</div>
+            </div>""", unsafe_allow_html=True)
+        with t3c:
+            u = counts.get(0, 0)
+            st.markdown(f"""<div class="g-card" style="text-align:center;">
+                <div style="font-size:36px;font-weight:800;color:#ef5350;">{u}</div>
+                <div class="g-card-label">{t("critical_lbl_d", lang)}</div>
+                <div class="g-card-desc">{u/total*100:.0f}{t("urgent_intervention", lang)}</div>
+            </div>""", unsafe_allow_html=True)
 
     health_ratio = counts.get(1, 0) / total if total > 0 else 0
     if health_ratio > 0.7:
@@ -713,12 +716,12 @@ if len(_eligible) >= 2:
         _PAL = {"bg":"#F7F9FA","accent":"#219EBC","text":"#4A5759","grid":"#DDE8E5",
                 "H":"#16a34a","M":"#b45309","S":"#dc2626","B":"#94a3b8","sub":"#84A59D"}
 
-        # ── Charts ────────────────────────────────────────────────────────────
+        # ── Charts — original 2-column layout, bigger figures ────────────────
         _cc1, _cc2 = st.columns(2)
 
         with _cc1:
             st.markdown(f"**{t('ts_health_trend', lang)}**")
-            _f1, _a1 = plt.subplots(figsize=(6, 3.6))
+            _f1, _a1 = plt.subplots(figsize=(9, 5.5))
             _f1.patch.set_facecolor(_PAL["bg"]); _a1.set_facecolor(_PAL["bg"])
             _a1.plot(_dates, _scores, color=_PAL["accent"], linewidth=2.5,
                      marker="o", markersize=9, markerfacecolor="white",
@@ -727,41 +730,43 @@ if len(_eligible) >= 2:
             for _d, _s in zip(_dates, _scores):
                 _a1.annotate(f"{_s:.0f}%", (_d, _s),
                              textcoords="offset points", xytext=(0, 11),
-                             ha="center", fontsize=9, color=_PAL["accent"],
+                             ha="center", fontsize=10, color=_PAL["accent"],
                              fontweight="bold")
-            _a1.set_ylim(0, 108)
-            _a1.set_ylabel("Health Score (%)", color=_PAL["text"], fontsize=10)
-            _a1.tick_params(axis="x", rotation=30, labelsize=8, colors=_PAL["text"])
-            _a1.tick_params(axis="y", labelsize=9,  colors=_PAL["text"])
+            _a1.set_ylim(0, 115)
+            _a1.set_ylabel("Health Score (%)", color=_PAL["text"], fontsize=11)
+            _a1.tick_params(axis="x", rotation=25, labelsize=9, colors=_PAL["text"])
+            _a1.tick_params(axis="y", labelsize=10, colors=_PAL["text"])
             _a1.grid(axis="y", alpha=0.35, color=_PAL["grid"])
             for _sp in _a1.spines.values(): _sp.set_edgecolor(_PAL["grid"])
             _a1.spines["top"].set_visible(False); _a1.spines["right"].set_visible(False)
-            _f1.tight_layout(); st.pyplot(_f1); plt.close(_f1)
+            _f1.tight_layout()
+            st.pyplot(_f1, use_container_width=True); plt.close(_f1)
 
         with _cc2:
             st.markdown(f"**{t('ts_veg_distribution', lang)}**")
-            _f2, _a2 = plt.subplots(figsize=(6, 3.6))
+            _f2, _a2 = plt.subplots(figsize=(9, 5.5))
             _f2.patch.set_facecolor(_PAL["bg"]); _a2.set_facecolor(_PAL["bg"])
             _x = list(range(len(_dates)))
-            _a2.bar(_x, _hpcts, 0.55, color=_PAL["H"], alpha=0.88,
+            _a2.bar(_x, _hpcts, 0.6, color=_PAL["H"], alpha=0.88,
                     label="Healthy" if lang=="en" else "سليم")
-            _a2.bar(_x, _mpcts, 0.55, bottom=_hpcts, color=_PAL["M"],
+            _a2.bar(_x, _mpcts, 0.6, bottom=_hpcts, color=_PAL["M"],
                     alpha=0.88, label="Moderate" if lang=="en" else "متوسط")
             _b3 = [a+b for a,b in zip(_hpcts, _mpcts)]
-            _a2.bar(_x, _spcts, 0.55, bottom=_b3, color=_PAL["S"],
+            _a2.bar(_x, _spcts, 0.6, bottom=_b3, color=_PAL["S"],
                     alpha=0.88, label="Severe" if lang=="en" else "حرج")
             _b4 = [a+b for a,b in zip(_b3, _spcts)]
-            _a2.bar(_x, _bpcts, 0.55, bottom=_b4, color=_PAL["B"],
+            _a2.bar(_x, _bpcts, 0.6, bottom=_b4, color=_PAL["B"],
                     alpha=0.88, label="Bare" if lang=="en" else "جرداء")
-            _a2.set_xticks(_x); _a2.set_xticklabels(_dates, rotation=30, ha="right",
-                                                      fontsize=8, color=_PAL["text"])
-            _a2.set_ylabel("Coverage (%)", color=_PAL["text"], fontsize=10)
-            _a2.set_ylim(0, 112); _a2.tick_params(axis="y", labelsize=9, colors=_PAL["text"])
-            _a2.legend(loc="upper right", fontsize=7, framealpha=0.75)
+            _a2.set_xticks(_x); _a2.set_xticklabels(_dates, rotation=25, ha="right",
+                                                      fontsize=9, color=_PAL["text"])
+            _a2.set_ylabel("Coverage (%)", color=_PAL["text"], fontsize=11)
+            _a2.set_ylim(0, 115); _a2.tick_params(axis="y", labelsize=10, colors=_PAL["text"])
+            _a2.legend(loc="upper right", fontsize=9, framealpha=0.75)
             for _sp in _a2.spines.values(): _sp.set_edgecolor(_PAL["grid"])
             _a2.spines["top"].set_visible(False); _a2.spines["right"].set_visible(False)
             _a2.grid(axis="y", alpha=0.3, color=_PAL["grid"])
-            _f2.tight_layout(); st.pyplot(_f2); plt.close(_f2)
+            _f2.tight_layout()
+            st.pyplot(_f2, use_container_width=True); plt.close(_f2)
 
         # ── Expansion cards ───────────────────────────────────────────────────
         _net   = _hkms[-1] - _hkms[0]
@@ -834,24 +839,24 @@ if len(_eligible) >= 2:
                 if not _is_change:
                     _sc2 = _hmap_data["composite_mean"] * 100
                     st.caption(f"📅 {_hmap_data['date']}  —  {_sc2:.0f}%")
-                    _mf, _ma = plt.subplots(figsize=(4, 4))
+                    _mf, _ma = plt.subplots(figsize=(7, 7))
                     _mf.patch.set_facecolor(_PAL["bg"])
                     _ma.imshow(_cmap(_hmap_data["health_map"]))
-                    _ma.set_title(_hmap_data["date"], fontsize=9, color=_PAL["text"])
-                    _ma.axis("off"); _mf.tight_layout(pad=0.2)
-                    st.pyplot(_mf); plt.close(_mf)
+                    _ma.set_title(_hmap_data["date"], fontsize=12, color=_PAL["text"])
+                    _ma.axis("off"); _mf.tight_layout(pad=0.3)
+                    st.pyplot(_mf, use_container_width=True); plt.close(_mf)
                 else:
                     st.caption(
                         f"{'Change Map' if lang=='en' else 'خريطة التغيير'}  —  "
                         f"{t('ts_improved',lang)}: {_imp:.0f}%  "
                         f"{t('ts_degraded',lang)}: {_deg:.0f}%"
                     )
-                    _mf2, _ma2 = plt.subplots(figsize=(4, 4))
+                    _mf2, _ma2 = plt.subplots(figsize=(7, 7))
                     _mf2.patch.set_facecolor(_PAL["bg"])
                     _ma2.imshow(_crgb)
                     _ma2.set_title(
                         f"{_sorted[0][1]['date']} → {_sorted[-1][1]['date']}",
-                        fontsize=9, color=_PAL["text"]
+                        fontsize=12, color=_PAL["text"]
                     )
                     _ma2.axis("off")
                     _ma2.legend(handles=[
@@ -861,8 +866,9 @@ if len(_eligible) >= 2:
                                        label=f"{t('ts_degraded',lang)} ({_deg:.0f}%)"),
                         mpatches.Patch(color=[c/255 for c in [148,163,184]],
                                        label=f"{t('ts_stable',lang)} ({_stb:.0f}%)"),
-                    ], loc="lower left", fontsize=7, framealpha=0.85)
-                    _mf2.tight_layout(pad=0.2); st.pyplot(_mf2); plt.close(_mf2)
+                    ], loc="lower left", fontsize=10, framealpha=0.85)
+                    _mf2.tight_layout(pad=0.3)
+                    st.pyplot(_mf2, use_container_width=True); plt.close(_mf2)
 
         # ── Summary table ─────────────────────────────────────────────────────
         st.markdown(

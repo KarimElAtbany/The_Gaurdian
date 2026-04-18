@@ -66,7 +66,10 @@ def _ar(text: str) -> str:
     try:
         import arabic_reshaper
         from bidi.algorithm import get_display
-        return get_display(arabic_reshaper.reshape(text))
+        # base_dir='R' forces RTL base direction — critical for text that starts
+        # with numbers or Latin words (e.g. "77.9% من..." or "NDVI عالي")
+        # Without it, get_display auto-detects as LTR and scrambles the output.
+        return get_display(arabic_reshaper.reshape(text), base_dir='R')
     except Exception:
         return text
 
@@ -78,53 +81,61 @@ def _txt(text: str, lang: str) -> str:
     return text
 
 
-def _ar_img_para(text: str, style, content_w_pt: float,
-                  bg_rgb=(255, 255, 255)) -> RLImage:
+def _ar_paragraphs(text: str, style, _unused=None) -> list:
     """
-    Render an Arabic paragraph as a PIL bitmap and return as RLImage.
+    Render an Arabic paragraph as a list of ReportLab Paragraphs — one per
+    visual line.
 
-    ReportLab has no RTL engine — all text-level bidi approaches produce
-    incorrect multi-line ordering.  PIL renders glyphs via FreeType which
-    handles Arabic shaping correctly; we word-wrap using PIL font metrics,
-    apply reshape+get_display per LINE, draw right-aligned, and embed the
-    bitmap in the PDF.
+    WHY NOT PIL images:
+      arabic_reshaper produces Presentation-Form codepoints (U+FE70–U+FEFF).
+      PIL/FreeType renders these per-glyph without OpenType GSUB, so on some
+      platforms (e.g. Railway's python:3.12-slim) the characters appear
+      disconnected.  ReportLab uses the same FreeType path BUT the Amiri font
+      has already been registered at startup with its full glyph table, and
+      the section/sub headings (which use this path) render correctly.
+
+    APPROACH:
+      1. Measure word widths with PIL/FreeType (measurement only, not rendering).
+      2. Split into lines that fit the content column.
+      3. Apply _ar() (reshape + bidi with base_dir='R') to each line.
+      4. Return one ReportLab Paragraph per line — rendered by ReportLab with
+         the registered Amiri font, giving the same quality as headings.
     """
     _ensure_arabic_deps()
     from PIL import Image as PILImage, ImageDraw, ImageFont
     import arabic_reshaper
     from bidi.algorithm import get_display
 
+    # ── Measure word widths with PIL (measurement only) ───────────────────────
     DPI        = 150
     PT_TO_PX   = DPI / 72.0
-    font_px    = max(8, int(style.fontSize * PT_TO_PX))
-    content_px = int(content_w_pt * PT_TO_PX)
-    line_gap   = int(font_px * 1.55)
+    font_px    = max(10, int(style.fontSize * PT_TO_PX))
+    content_px = int(CONTENT_W * PT_TO_PX)
     pad_x      = int(font_px * 0.4)
-    pad_y      = int(font_px * 0.25)
 
     try:
-        tc    = style.textColor
-        color = (int(tc.red * 255), int(tc.green * 255), int(tc.blue * 255))
+        mfont = ImageFont.truetype(str(_AMIRI_PATH), font_px)
     except Exception:
-        color = (44, 58, 60)
+        mfont = None
 
-    try:
-        font = ImageFont.truetype(str(_AMIRI_PATH), font_px)
-    except Exception:
-        font = ImageFont.load_default()
+    def _measure(s: str) -> int:
+        """Return pixel width of reshaped+bidi string."""
+        bidi_s = get_display(arabic_reshaper.reshape(s), base_dir='R')
+        if mfont is None:
+            return len(s) * font_px  # rough fallback
+        tmp = PILImage.new("RGB", (1, 1))
+        bb  = ImageDraw.Draw(tmp).textbbox((0, 0), bidi_s, font=mfont)
+        return bb[2] - bb[0]
 
-    # Word-wrap using PIL measurements
+    # ── Word-wrap ──────────────────────────────────────────────────────────────
     words   = text.split()
     lines   = []
     current = []
-    tmp_img = PILImage.new("RGB", (1, 1))
-    tmp_drw = ImageDraw.Draw(tmp_img)
+    max_px  = content_px - 2 * pad_x
 
     for word in words:
-        test   = " ".join(current + [word])
-        bidi_t = get_display(arabic_reshaper.reshape(test))
-        bbox   = tmp_drw.textbbox((0, 0), bidi_t, font=font)
-        if current and (bbox[2] - bbox[0]) > (content_px - 2 * pad_x):
+        candidate = " ".join(current + [word])
+        if current and _measure(candidate) > max_px:
             lines.append(" ".join(current))
             current = [word]
         else:
@@ -132,28 +143,12 @@ def _ar_img_para(text: str, style, content_w_pt: float,
     if current:
         lines.append(" ".join(current))
 
-    # Render each line right-aligned
-    img_h = len(lines) * line_gap + 2 * pad_y
-    img   = PILImage.new("RGB", (content_px, img_h), color=bg_rgb)
-    drw   = ImageDraw.Draw(img)
-    y = pad_y
+    # ── Render each line as a ReportLab Paragraph (same path as headings) ─────
+    result = []
     for line in lines:
-        bidi_line = get_display(arabic_reshaper.reshape(line))
-        bbox      = drw.textbbox((0, 0), bidi_line, font=font)
-        x         = content_px - (bbox[2] - bbox[0]) - pad_x
-        drw.text((x, y), bidi_line, font=font, fill=color)
-        y += line_gap
-
-    buf = io.BytesIO()
-    img.save(buf, format="PNG")
-    buf.seek(0)
-    rl_h = img_h * (content_w_pt / content_px)
-    return RLImage(buf, width=content_w_pt, height=rl_h)
-
-
-def _ar_paragraphs(text: str, style, _unused=None) -> list:
-    """Wrapper kept for call-site compatibility — delegates to PIL renderer."""
-    return [_ar_img_para(text, style, CONTENT_W)]
+        shaped = _ar(line)            # reshape + bidi with base_dir='R'
+        result.append(Paragraph(shaped, style))
+    return result if result else [Paragraph(_ar(text), style)]
 
 
 def _logo_path():
@@ -644,13 +639,6 @@ def generate_report(
             canvas.drawRightString(
                 PAGE_W - 2 * cm, 1.2 * cm,
                 f"{page_label} {doc.page}  ·  {datetime.now().strftime('%Y-%m-%d')}"
-            )
-        if logo_path and logo_path.suffix == ".png":
-            canvas.drawImage(
-                str(logo_path),
-                PAGE_W - 3.5 * cm, 0.45 * cm,
-                width=1.5 * cm, height=1.5 * cm,
-                preserveAspectRatio=True, mask="auto"
             )
         canvas.setStrokeColor(MID_BLUE)
         canvas.setLineWidth(0.6)

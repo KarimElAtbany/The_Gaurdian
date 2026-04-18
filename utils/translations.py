@@ -210,7 +210,7 @@ _T = {
                                  "Lower values detect more trees but may include false positives."),
         "section_palm_census":  "Palm Census & Health Classification",
         "highres_title":        "High-Resolution Imaging Mode",
-        "highres_body":         ("Acquires Google Maps satellite imagery at ~0.3 m/pixel resolution "
+        "highres_body":         ("Acquires Maps satellite imagery at ~0.3 m/pixel resolution "
                                  "for precise individual palm detection — significantly sharper than "
                                  "the 10 m/pixel Sentinel-2 product. No additional downloads required; "
                                  "the image is captured automatically from your drawn area of interest."),
@@ -218,9 +218,9 @@ _T = {
                                  "and draw your farm boundary first."),
         "no_model_error":       "AI model not found. Place a .pt model file inside the models/ folder.",
         "acquire_btn":          "🛰️  Acquire High-Resolution Image & Run Detection",
-        "capturing_spinner":    "Capturing high-resolution satellite image from Google Maps…",
+        "capturing_spinner":    "Capturing high-resolution satellite image from Maps…",
         "running_detection":    "Running AI detection on high-resolution image…",
-        "caption_aoi":          "📍 Area of Interest — Google Maps Satellite",
+        "caption_aoi":          "📍 Area of Interest ",
         "caption_detections":   "🌴 Palm Tree Detection Results",
         "section_census":       "Census Results",
         "total_palms_lbl":      "Total Palms Detected",
@@ -328,7 +328,7 @@ _T = {
         "rpt_s2_overview":      (
             "A total of <b>{total:,} palm trees</b> were identified within the area of interest "
             "using a fine-tuned YOLOv8 deep learning model. High-resolution satellite imagery "
-            "(~0.3 m/pixel from Google Maps) was used to ensure individual crown-level detection accuracy. "
+            "(~0.3 m/pixel from Maps) was used to ensure individual crown-level detection accuracy. "
             "Each detected tree was classified into one of three condition categories."
         ),
         "rpt_detect_summary":   "Detection Summary by Condition",
@@ -500,15 +500,15 @@ _T = {
         "tab_detection":        "كشف الأشجار",
         "tab_iot":              "🔒 استهلاك الابار (IoT)",
         "iot_analysis_title":   "التحليل: تستخدم المنصة هذه البيانات من أجل:",
-        "iot_bullet1":          "حساب إنتاج المياه: إجمالي حجم المياه المستخرجة على مدار الوقت.",
-        "iot_bullet2":          "تحديد فقدان المياه: الكشف عن التسريبات أو التصريف غير المقاس.",
-        "iot_bullet3":          "مراقبة معدلات الاستخراج: ضمان عدم تجاوز البئر لحدود التغذية المستدامة للمياه الجوفية.",
-        "iot_irr_title":        "ذكاء الري:",
+        "iot_bullet1":          "حساب الإنتاج المائي: إجمالي الحجم المستخرج بالنسبة للزمن.",
+        "iot_bullet2":          "تحديد فاقد المياه: الكشف عن التسربات أو الصرف غير المقيس.",
+        "iot_bullet3":          "مراقبة معدلات الاستخراج: ضمان عدم تجاوز البئر لحدود إعادة التغذية المستدامة للمياه الجوفية.",
+        "iot_irr_title":        "الذكاء في الري:",
         "iot_irr_body":         (
-            "حساب الاحتياجات: من أبرز الميزات المتقدمة التي ذكرتموها القدرة على حساب "
-            "\"كمية المياه اللازمة للري الكامل\". يشير هذا إلى أن المنصة قد تدمج بيانات "
-            "رطوبة التربة أو نماذج التبخر النتحي (ET) لتحديد الوقت الأمثل لتوقف الضخ للمزارع، "
-            "مما يمنع الإفراط في الري واستنزاف المياه الجوفية."
+            "حساب الاحتياجات: تتمثل إحدى أكثر الميزات تقدماً في القدرة على حساب "
+            "\"كمية المياه اللازمة للري الكامل\". يشير ذلك إلى أن المنصة قد تدمج "
+            "بيانات رطوبة التربة أو نماذج التبخر-النتح (ET) لإخبار المزارع بالوقت "
+            "الدقيق للتوقف عن الضخ، مما يمنع الري الزائد واستنزاف طبقة المياه الجوفية."
         ),
         "no_downloaded":        ("&#9432; لا توجد منتجات محمّلة. "
                                  "يرجى الانتقال إلى <strong>استحواذ البيانات</strong> أولاً."),
@@ -592,7 +592,7 @@ _T = {
         "acquire_btn":          "🛰️  التقاط صورة عالية الدقة وتشغيل الكشف",
         "capturing_spinner":    "جارٍ التقاط صورة الأقمار الاصطناعية عالية الدقة…",
         "running_detection":    "جارٍ تشغيل كشف الذكاء الاصطناعي على الصورة عالية الدقة…",
-        "caption_aoi":          "📍 منطقة الاهتمام — صور Google Maps الاصطناعية",
+        "caption_aoi":          " منطقة الاهتمام ",
         "caption_detections":   "🌴 نتائج كشف النخيل",
         "section_census":       "نتائج الإحصاء",
         "total_palms_lbl":      "إجمالي النخيل المكتشف",
@@ -715,9 +715,9 @@ _T = {
         "rpt_s3_title":         "٣.  تحليل التقاطع والتوقعات الاقتصادية",
         "rpt_key_findings":     "النتائج الرئيسية",
         "rpt_finding1":         "يشير تحليل النبات إلى أن {pct:.1f}% من المنطقة المراقبة تدعم غطاءً نباتيًا صحيًا.",
-        "rpt_finding2":         "{count:,} نخلة مصنفة على أنها سليمة، مرتبطة مكانيًا بمناطق الغطاء النباتي عالي NDVI.",
-        "rpt_finding3":         "{count:,} شجرة في حالة حرجة تتوافق مع {pct:.1f}% من مناطق الإجهاد الشديد.",
-        "rpt_finding4":         "{count:,} شجرة ذات إجهاد مبكر رُصدت ضمن {pct:.1f}% من مناطق الإجهاد المتوسط — يُنصح بالتدخل.",
+        "rpt_finding2":         "\u200f{count:,} نخلة مصنفة على أنها سليمة، مرتبطة مكانيًا بمناطق الغطاء النباتي عالي NDVI.",
+        "rpt_finding3":         "\u200f{count:,} شجرة في حالة حرجة تتوافق مع {pct:.1f}% من مناطق الإجهاد الشديد.",
+        "rpt_finding4":         "\u200f{count:,} شجرة ذات إجهاد مبكر رُصدت ضمن {pct:.1f}% من مناطق الإجهاد المتوسط — يُنصح بالتدخل.",
         "rpt_econ_outlook":     "التوقعات الاقتصادية",
         "rpt_positive":         "إيجابي",
         "rpt_moderate":         "متوسط",
@@ -773,15 +773,6 @@ html, body, [class*="css"], .stApp {
 .g-footer { direction: rtl; text-align: right; }
 .g-info-banner { flex-direction: row-reverse; }
 .g-step-num, .g-step-title, .g-step-body { text-align: right; }
-/* ── Reversed header colors in Arabic mode ── */
-.guardian-header {
-    background: linear-gradient(135deg, #219EBC 0%, #2E6B7A 60%, #4A5759 100%) !important;
-}
-.g-section-title {
-    color: #219EBC !important;
-    border-bottom-color: rgba(74,87,89,0.3) !important;
-}
-.g-section-title i { color: #4A5759 !important; }
 div[data-testid="column"] { direction: rtl; }
 div[data-testid="stSidebar"] { direction: rtl; text-align: right; }
 .stButton > button, .stDownloadButton > button {
@@ -821,6 +812,50 @@ div[data-testid="stAlert"] *,
 }
 /* Subheader and general markdown paragraphs in data page */
 .stSubheader p, h3 {
+    text-align: right !important;
+}
+
+/* ── Slider — keep track + thumb LTR so keyboard popup doesn't overlay label ── */
+[data-testid="stSlider"] > div > div {
+    direction: ltr !important;
+}
+[data-testid="stSlider"] label,
+[data-testid="stSlider"] p {
+    direction: rtl !important;
+    text-align: right !important;
+    width: 100% !important;
+}
+/* Expander header + content — full RTL */
+[data-testid="stExpander"] summary,
+[data-testid="stExpander"] summary span,
+[data-testid="stExpander"] summary p {
+    direction: rtl !important;
+    text-align: right !important;
+}
+[data-testid="stExpander"] [data-testid="stExpanderDetails"] {
+    direction: rtl !important;
+}
+
+/* ── Number / text input — fix keyboard icon overlapping Arabic text ── */
+/* Keep the inner input wrapper LTR so step buttons stay on the right   */
+[data-testid="stNumberInput"] [data-baseweb="base-input"] {
+    direction: ltr !important;
+}
+/* But keep the typed text itself RTL/right-aligned */
+[data-testid="stNumberInput"] input {
+    direction: rtl !important;
+    text-align: right !important;
+}
+/* Hide Streamlit's keyboard-shortcut hint bubble that overlaps RTL text */
+[data-testid="InputInstructions"] {
+    display: none !important;
+}
+/* Text inputs — same fix: wrapper LTR, value text RTL */
+[data-testid="stTextInput"] [data-baseweb="base-input"] {
+    direction: ltr !important;
+}
+[data-testid="stTextInput"] input {
+    direction: rtl !important;
     text-align: right !important;
 }
 

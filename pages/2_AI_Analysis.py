@@ -355,7 +355,7 @@ with iot_tab:
     img_path = iot_dir / img_name
 
     if img_path.exists():
-        st.image(str(img_path), use_container_width=True)
+        st.image(str(img_path), width="stretch")
     else:
         st.warning(f"Image not found: iot/{img_name}")
 
@@ -517,7 +517,7 @@ with detection_tab:
         col_prev1, col_prev2 = st.columns(2)
         with col_prev1:
             st.caption(t("caption_aoi", lang))
-            st.image(_stamp_logo(img_rgb), use_container_width=True)
+            st.image(_stamp_logo(img_rgb), width="stretch")
 
         # ── Choose detection mode based on captured image size ────────────────
         from utils.yolo_pipeline import TILE_THRESH
@@ -556,7 +556,7 @@ with detection_tab:
 
         with col_prev2:
             st.caption(t("caption_detections", lang))
-            st.image(_stamp_logo(cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB)), use_container_width=True)
+            st.image(_stamp_logo(cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB)), width="stretch")
 
         if use_tiling:
             from utils.yolo_pipeline import TILE_SIZE, TILE_OVERLAP

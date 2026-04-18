@@ -286,10 +286,10 @@ class NDVIPipeline:
             "axes.spines.right": False,
         })
 
-        fig = plt.figure(figsize=(24, 17), facecolor=PALETTE["bg"])
+        fig = plt.figure(figsize=(24, 22), facecolor=PALETTE["bg"])
         gs  = GridSpec(3, n_cols, figure=fig,
-                       height_ratios=[2.6, 1.6, 1.2],
-                       hspace=0.44, wspace=0.30)
+                       height_ratios=[2.2, 1.6, 2.2],
+                       hspace=0.48, wspace=0.30)
         fig.patch.set_facecolor(PALETTE["bg"])
 
         span = n_cols // 2
@@ -375,8 +375,8 @@ class NDVIPipeline:
             [stats[i]["area_km2"] for i in range(4)],
             color=self.CLASS_COLORS,
             edgecolor=PALETTE["card"],
-            linewidth=1.4,
-            width=0.52,
+            linewidth=1.6,
+            width=0.60,
             zorder=3,
         )
         max_area = max((stats[i]["area_km2"] for i in range(4)), default=1)
@@ -385,16 +385,17 @@ class NDVIPipeline:
             if h > 0:
                 ax_bar.text(
                     bar_obj.get_x() + bar_obj.get_width() / 2,
-                    h + 0.012 * max_area,
-                    f"{stats[cid]['pct']:.0f}%",
-                    ha="center", va="bottom", fontsize=9,
+                    h + 0.015 * max_area,
+                    f"{stats[cid]['pct']:.0f}%\n{stats[cid]['area_km2']:.2f} km²",
+                    ha="center", va="bottom", fontsize=11,
                     fontweight="bold", color=PALETTE["text"]
                 )
-        ax_bar.set_ylabel("Area (km²)", fontsize=9, color=PALETTE["sub"])
+        ax_bar.set_ylabel("Area (km²)", fontsize=12, color=PALETTE["sub"])
         ax_bar.set_title("Area per Health Class", fontweight="bold",
-                          fontsize=10, color=PALETTE["text"], pad=8)
+                          fontsize=13, color=PALETTE["text"], pad=12)
         ax_bar.grid(axis="y", alpha=0.35, color=PALETTE["grid"], zorder=0)
-        ax_bar.tick_params(axis="x", labelsize=8, rotation=10)
+        ax_bar.tick_params(axis="x", labelsize=11, rotation=10)
+        ax_bar.tick_params(axis="y", labelsize=10)
         ax_bar.set_facecolor(PALETTE["card"])
 
         ax_idx = fig.add_subplot(gs[2, span:])
@@ -411,20 +412,23 @@ class NDVIPipeline:
             hbars = ax_idx.barh(
                 radar_names, mean_vals,
                 color=idx_colors[:len(mean_vals)],
-                height=0.48, edgecolor=PALETTE["card"], linewidth=1.2, zorder=3
+                height=0.55, edgecolor=PALETTE["card"], linewidth=1.4, zorder=3
             )
-            ax_idx.set_xlim(0, 1.18)
+            ax_idx.set_xlim(0, 1.25)
             ax_idx.set_xlabel("Mean Scaled Value  (0 = poor → 1 = excellent)",
-                               fontsize=8, color=PALETTE["sub"])
+                               fontsize=11, color=PALETTE["sub"])
             ax_idx.set_title("Health Index Summary", fontweight="bold",
-                              fontsize=10, color=PALETTE["text"], pad=8)
+                              fontsize=13, color=PALETTE["text"], pad=12)
             ax_idx.grid(axis="x", alpha=0.35, color=PALETTE["grid"], zorder=0)
             ax_idx.set_facecolor(PALETTE["card"])
+            ax_idx.tick_params(axis="y", labelsize=11)
+            ax_idx.tick_params(axis="x", labelsize=10)
             for hb, val in zip(hbars, mean_vals):
                 bar_lbl = "Poor" if val < 0.35 else ("Fair" if val < 0.60 else "Good")
                 ax_idx.text(val + 0.03, hb.get_y() + hb.get_height() / 2,
                             f"{val:.2f}  ({bar_lbl})",
-                            va="center", fontsize=9, color=PALETTE["text"])
+                            va="center", fontsize=11, fontweight="bold",
+                            color=PALETTE["text"])
 
         # ── Super-title ──────────────────────────────────────────────────
         fig.suptitle(
